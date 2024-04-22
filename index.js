@@ -31,9 +31,9 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        if (file.mimetype !== 'application/vnd.android.package-archive') {
-            return cb(new Error('Invalid file type, only APKs are allowed!'), false);
-        }
+        // if (file.mimetype !== 'application/vnd.android.package-archive') {
+        //     return cb(new Error('Invalid file type, only APKs are allowed!'), false);
+        // }
         cb(null, true);
     },
     limits: { fileSize: 10 * 1024 * 1024*1024 } // 10 MB limit
