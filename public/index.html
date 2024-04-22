@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK Management</title>
+    <style>
+        li { margin-bottom: 10px; }
+        button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Upload APK File</h1>
+    <form action="/upload-apk" method="POST" enctype="multipart/form-data">
+        <input type="file" name="apk" accept=".apk" required>
+        <button type="submit">Upload APK</button>
+    </form>
+
+    <h2>Available APKs</h2>
+    <ul id="apkList"></ul>
+
+    <script>
+        // Fetch the list of APKs from the server and display them
+        window.onload = function() {
+            fetch('/apks')
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('apkList');
+                    data.forEach(apk => {
+                        const item = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = `/uploads/${apk.filename}`;
+                        link.textContent = apk.filename;
+                        link.download = apk.filename; // Suggest download with the original filename
+                        item.appendChild(link);
+
+                        // Timestamp
+                        const text = document.createTextNode(` - Uploaded on: ${new Date(apk.uploadDate).toLocaleString()}`);
+                        item.appendChild(text);
+
+                        // Rename form
+                        const renameInput = document.createElement('input');
+                        renameInput.type = 'text';
+                        renameInput.placeholder = 'New filename';
+                        renameInput.style = 'margin-left: 10px;';
+                        const renameButton = document.createElement('button');
+                        renameButton.textContent = 'Rename';
+                        renameButton.onclick = function() {
+                            renameAPK(apk.filename, renameInput.value);
+                        };
+                        item.appendChild(renameInput);
+                        item.appendChild(renameButton);
+
+                        // Delete button
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = function() {
+                            deleteAPK(apk.filename);
+                        };
+                        item.appendChild(deleteButton);
+
+                        list.appendChild(item);
+                    });
+                })
+                .catch(error => console.error('Error fetching APKs:', error));
+        };
+
+        function renameAPK(oldFilename, newFilename) {
+            fetch('/rename-apk', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ oldFilename, newFilename })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('APK renamed successfully');
+                    window.location.reload(); // Reload the page to update the list
+                } else {
+                    alert('Failed to rename APK');
+                }
+            });
+        }
+
+        function deleteAPK(filename) {
+            fetch('/delete-apk', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ filename })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('APK deleted successfully');
+                    window.location.reload(); // Reload the page to update the list
+                } else {
+                    alert('Failed to delete APK');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
