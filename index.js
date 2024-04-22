@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs').promises; // Use fs promises for async operations
 const path = require('path');
+const moment = require('moment-timezone');
 
 const app = express();
 app.use(express.json()); // bodyParser.json() is deprecated
@@ -22,8 +23,9 @@ ensureDirectoryExists();
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, UPLOADS_DIR),
     filename: (req, file, cb) => {
-        const timestamp = Date.now();
-        const filename = file.fieldname + '-' + timestamp + '.apk';
+        // Format the current date and time to append to the file name
+        const dateInIST = moment().tz("Asia/Kolkata").format('DD-MM-YYYY-HH-mm');
+        const filename = `${file.fieldname}-${dateInIST}.apk`;
         cb(null, filename);
     }
 });
@@ -31,13 +33,15 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
+        // Uncomment and modify according to your MIME type checking needs
         // if (file.mimetype !== 'application/vnd.android.package-archive') {
         //     return cb(new Error('Invalid file type, only APKs are allowed!'), false);
         // }
         cb(null, true);
     },
-    limits: { fileSize: 10 * 1024 * 1024*1024 } // 10 MB limit
+    limits: { fileSize: 10 * 1024 * 1024 * 1024 } // 10 GB limit
 });
+
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
