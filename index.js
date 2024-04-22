@@ -10,7 +10,33 @@ app.use('/uploads', express.static('uploads'));
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 const APK_DIRECTORY = './uploads';
-const METADATA_FILE = './metadata.json';
+
+
+const METADATA_FILE = path.join(__dirname, 'metadata.json');
+
+// Function to read metadata from the JSON file
+async function readMetadata() {
+    try {
+        const data = await fs.readFile(METADATA_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error("Failed to read metadata:", error);
+        // Depending on your requirements, you might want to handle this differently
+        // For example, you could initialize an empty metadata file here if it doesn't exist
+        throw error; // Rethrow the error after logging it or handling recovery
+    }
+}
+
+// Function to write metadata to the JSON file
+async function writeMetadata(metadata) {
+    try {
+        const data = JSON.stringify(metadata, null, 2); // Pretty print the JSON
+        await fs.writeFile(METADATA_FILE, data, 'utf8');
+    } catch (error) {
+        console.error("Failed to write metadata:", error);
+        throw error; // Rethrow the error after logging it or handling recovery
+    }
+}
 
 async function ensureDirectoryExists() {
     try {
