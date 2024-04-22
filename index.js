@@ -84,24 +84,46 @@ app.get('/apks', async (req, res) => {
 });
 app.patch('/rename-apk', async (req, res) => {
     const { oldFilename, newFilename } = req.body;
-    try {
-        // Rename the file in the filesystem
-        const oldPath = path.join(UPLOADS_DIR, oldFilename);
-        const newPath = path.join(UPLOADS_DIR, newFilename);
 
+    // Validate input filenames
+    if (!oldFilename || !newFilename) {
+        return res.status(400).send('Both old and new filenames are required.');
+    }
+
+    // Ensure new filename ends with '.apk'
+    const sanitizedNewFilename = newFilename.trim().toLowerCase().endsWith('.apk')
+        ? newFilename.trim()
+        : newFilename.trim() + '.apk';
+
+    try {
+        // Construct file paths
+        const oldPath = path.join(UPLOADS_DIR, oldFilename);
+        const newPath = path.join(UPLOADS_DIR, sanitizedNewFilename);
+
+        // Check if the new file name already exists
+        if (await fs.access(newPath, fs.constants.F_OK).then(() => true).catch(() => false)) {
+            return res.status(409).send('A file with the new filename already exists.');
+        }
+
+        // Rename the file in the filesystem
         await fs.rename(oldPath, newPath);
+
         // Update the metadata
         const metadata = await readMetadata();
         const apkIndex = metadata.findIndex(apk => apk.filename === oldFilename);
         if (apkIndex !== -1) {
-            metadata[apkIndex].filename = newFilename;
+            metadata[apkIndex].filename = sanitizedNewFilename;
             await writeMetadata(metadata);
-            res.send('APK renamed successfully');
+            res.send('APK renamed successfully to ' + sanitizedNewFilename);
         } else {
             res.status(404).send('APK not found');
         }
     } catch (error) {
-        res.status(500).send('Error renaming APK: ' + error.message);
+        if (error.code === 'ENOENT') {
+            res.status(404).send('Original APK file not found.');
+        } else {
+            res.status(500).send('Error renaming APK: ' + error.message);
+        }
     }
 });
 
