@@ -34,9 +34,9 @@ const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
         // Uncomment and modify according to your MIME type checking needs
-        // if (file.mimetype !== 'application/vnd.android.package-archive') {
-        //     return cb(new Error('Invalid file type, only APKs are allowed!'), false);
-        // }
+        if (file.mimetype !== 'application/vnd.android.package-archive') {
+            return cb(new Error('Invalid file type, only APKs are allowed!'), false);
+        }
         cb(null, true);
     },
     limits: { fileSize: 10 * 1024 * 1024 * 1024 } // 10 GB limit
@@ -50,6 +50,15 @@ app.get('/', (req, res) => {
 app.post('/upload-apk', upload.single('apk'), (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded.');
     res.status(201).send('APK uploaded successfully: ' + req.file.filename);
+});
+app.get('/download-apk/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(UPLOADS_DIR, filename);
+    res.download(filePath, filename, (err) => {
+        if (err) {
+            res.status(500).send('Error downloading the APK: ' + err.message);
+        }
+    });
 });
 
 app.patch('/rename-apk', async (req, res) => {

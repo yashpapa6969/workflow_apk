@@ -20,50 +20,50 @@
     <ul id="apkList"></ul>
 
     <script>
-        // Fetch the list of APKs from the server and display them
-        window.onload = function() {
-            fetch('/apks')
-                .then(response => response.json())
-                .then(data => {
-                    const list = document.getElementById('apkList');
-                    data.forEach(apk => {
-                        const item = document.createElement('li');
-                        const link = document.createElement('a');
-                        link.href = `/uploads/${apk.filename}`;
-                        link.textContent = apk.filename;
-                        link.download = apk.filename; // Suggest download with the original filename
-                        item.appendChild(link);
+     window.onload = function() {
+    fetch('/apks')
+        .then(response => response.json())
+        .then(data => {
+            const list = document.getElementById('apkList');
+            data.forEach(apk => {
+                const item = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = `/download-apk/${apk.filename}`; // Point to the download API
+                link.textContent = apk.filename;
+                // link.download = apk.filename; // Remove this line
+                item.appendChild(link);
 
-                        // Timestamp
-                        const text = document.createTextNode(` - Uploaded on: ${new Date(apk.uploadDate).toLocaleString()}`);
-                        item.appendChild(text);
+                // Timestamp - Assuming you send this data from your server
+                const text = document.createTextNode(` - Uploaded on: ${new Date(apk.uploadDate).toLocaleString()}`);
+                item.appendChild(text);
 
-                        // Rename form
-                        const renameInput = document.createElement('input');
-                        renameInput.type = 'text';
-                        renameInput.placeholder = 'New filename';
-                        renameInput.style = 'margin-left: 10px;';
-                        const renameButton = document.createElement('button');
-                        renameButton.textContent = 'Rename';
-                        renameButton.onclick = function() {
-                            renameAPK(apk.filename, renameInput.value);
-                        };
-                        item.appendChild(renameInput);
-                        item.appendChild(renameButton);
+                // Rename form
+                const renameInput = document.createElement('input');
+                renameInput.type = 'text';
+                renameInput.placeholder = 'New filename';
+                renameInput.style = 'margin-left: 10px;';
+                const renameButton = document.createElement('button');
+                renameButton.textContent = 'Rename';
+                renameButton.onclick = function() {
+                    renameAPK(apk.filename, renameInput.value);
+                };
+                item.appendChild(renameInput);
+                item.appendChild(renameButton);
 
-                        // Delete button
-                        const deleteButton = document.createElement('button');
-                        deleteButton.textContent = 'Delete';
-                        deleteButton.onclick = function() {
-                            deleteAPK(apk.filename);
-                        };
-                        item.appendChild(deleteButton);
+                // Delete button
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = function() {
+                    deleteAPK(apk.filename);
+                };
+                item.appendChild(deleteButton);
 
-                        list.appendChild(item);
-                    });
-                })
-                .catch(error => console.error('Error fetching APKs:', error));
-        };
+                list.appendChild(item);
+            });
+        })
+        .catch(error => console.error('Error fetching APKs:', error));
+};
+
 
         function renameAPK(oldFilename, newFilename) {
             fetch('/rename-apk', {
